@@ -51,4 +51,4 @@ USER app
 # Get binary from builder
 COPY --from=builder --chown=app  ${FOLDER}/target/release/${APP_NAME} ./app
 
-CMD ./app
+ENTRYPOINT ["./app"]
