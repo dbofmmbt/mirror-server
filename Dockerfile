@@ -3,7 +3,7 @@ ARG APP_NAME=mirror_server
 
 ARG FOLDER=/usr/src/${APP_NAME}
 
-FROM rust:1.66 as base
+FROM rust:1.69 as base
 RUN rustup component add rustfmt clippy
 
 # Define base folder
@@ -17,6 +17,7 @@ WORKDIR ${FOLDER}
 
 FROM base as deps_builder
 ARG APP_NAME
+ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 
 # Copy dependencies
 RUN cargo init
@@ -50,5 +51,6 @@ USER app
 
 # Get binary from builder
 COPY --from=builder --chown=app  ${FOLDER}/target/release/${APP_NAME} ./app
+COPY self-signed-certs ./self-signed-certs
 
-ENTRYPOINT ["./app"]
+ENTRYPOINT ./app

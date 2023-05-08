@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, future::Future, str::FromStr};
 
 use axum::{
     debug_handler,
@@ -8,7 +8,9 @@ use axum::{
     routing::any,
     Json, Router,
 };
+use axum_server::tls_rustls::RustlsConfig;
 use serde_json::{json, Value};
+use tokio::sync::mpsc::Sender;
 
 #[tokio::main]
 async fn main() {
@@ -16,15 +18,43 @@ async fn main() {
         .route("/", any(mirror))
         .route("/*anything", any(mirror));
 
-    let port: u16 = std::env::var("SERVER_PORT")
-        .unwrap_or_else(|_| "8080".to_owned())
-        .parse()
-        .unwrap();
+    let port: u16 = value_from_env("SERVER_PORT").unwrap_or(8080);
+    let port_https: u16 = value_from_env("SERVER_PORT_HTTPS").unwrap_or(40443);
 
-    axum::Server::bind(&format!("0.0.0.0:{port}").parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let config =
+        RustlsConfig::from_pem_file("self-signed-certs/cert.pem", "self-signed-certs/key.pem")
+            .await
+            .unwrap();
+
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<()>(2);
+
+    launch(
+        axum_server::bind(format!("0.0.0.0:{port}").parse().unwrap())
+            .serve(app.clone().into_make_service()),
+        tx.clone(),
+    );
+
+    launch(
+        axum_server::bind_rustls(format!("0.0.0.0:{port_https}").parse().unwrap(), config)
+            .serve(app.into_make_service()),
+        tx,
+    );
+
+    let _ = rx.recv().await;
+}
+
+fn value_from_env<T: FromStr>(env_var: &str) -> Option<T> {
+    std::env::var(env_var)
+        .into_iter()
+        .flat_map(|v| v.parse())
+        .next()
+}
+
+fn launch(fut: impl Future + Send + 'static, quit: Sender<()>) {
+    tokio::task::spawn(async move {
+        fut.await;
+        quit.send(()).await.unwrap();
+    });
 }
 
 #[debug_handler]
