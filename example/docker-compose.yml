@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  proxy:
+    build:
+      context: ./nginx
+    ports:
+      - "8080:8080"
+
+  backend:
+    image: dbofmmbt/mirror-server
+
+  any_domain:
+    image: dbofmmbt/mirror-server
+    environment:
+      - SERVER_NAME=ANY_DOMAIN_MOCK
+      - SERVER_PORT_HTTPS=443
+    networks:
+      default:
+        aliases:
+          - "any_domain.com"
+
+  tests:
+    build:
+      context: ./tests
+    volumes:
+      - ./tests:/tests
+    depends_on:
+      - proxy
