@@ -18,8 +18,8 @@ async fn main() {
         .route("/", any(mirror))
         .route("/*anything", any(mirror));
 
-    let port: u16 = value_from_env("SERVER_PORT").unwrap_or(8080);
-    let port_https: u16 = value_from_env("SERVER_PORT_HTTPS").unwrap_or(40443);
+    let port: u16 = value_from_env("SERVER_PORT").unwrap_or(80);
+    let port_https: u16 = value_from_env("SERVER_PORT_HTTPS").unwrap_or(443);
 
     let config =
         RustlsConfig::from_pem_file("self-signed-certs/cert.pem", "self-signed-certs/key.pem")

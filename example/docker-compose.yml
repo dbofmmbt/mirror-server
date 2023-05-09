@@ -9,12 +9,13 @@ services:
 
   backend:
     image: dbofmmbt/mirror-server
+    environment:
+      - SERVER_PORT=8080
 
   any_domain:
     image: dbofmmbt/mirror-server
     environment:
       - SERVER_NAME=ANY_DOMAIN_MOCK
-      - SERVER_PORT_HTTPS=443
     networks:
       default:
         aliases:
