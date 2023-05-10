@@ -23,10 +23,10 @@ sequenceDiagram
     autonumber
     tests->>nginx: send request
     nginx->nginx: Apply proxy rules
-    nginx->>backend: forward request
-    backend-->>nginx: responds with all<br/> request info in its body
+    nginx->>mirror-server: forward request
+    mirror-server-->>nginx: responds with all<br/> request info in its body
     nginx-->>tests: sends the response<br/> back to the test
-    tests-->tests: assert that the request received<br/> by `backend` is exactly as expected
+    tests-->tests: assert that the request received<br/> by `mirror-server` is exactly as expected
 ```
 
 There's a few nice details too:
